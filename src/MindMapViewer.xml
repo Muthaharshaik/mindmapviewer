@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<widget id="lowcodelabs.mindmapviewer.MindMapViewer" pluginWidget="true" needsEntityContext="true" offlineCapable="true"
+        supportedPlatform="Web"
+        xmlns="http://www.mendix.com/widget/1.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.mendix.com/widget/1.0/ ../node_modules/mendix/custom_widget.xsd">
+    <name>Mind Map Viewer</name>
+    <description>Visualizes mind map JSON as an interactive graph</description>
+    <icon/>
+    <properties>
+        <propertyGroup caption="Data Source">
+            <property key="mindMapJson" type="attribute" required="false">
+                <caption>JSON</caption>
+                <description>JSON which is needed to show as Tree Structure.</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
+
+            <property key="onNodeClick" type="action" required="false">
+                <caption>On Node Click</caption>
+                <description>Triggered when a node is clicked.</description>
+            </property>
+
+        </propertyGroup>
+    </properties>
+</widget>
