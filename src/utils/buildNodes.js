@@ -9,7 +9,8 @@ export function buildNodes(mindMap) {
         type: "customNode",
         data: {
             label: mindMap.rootNode.label,
-            description: mindMap.rootNode.description
+            description: mindMap.rootNode.description,
+            color: mindMap.rootNode.color
         },
         style: {
             backgroundColor: mindMap.rootNode.color   // ✅ FROM JSON
@@ -23,7 +24,8 @@ export function buildNodes(mindMap) {
             type: "customNode",
             data: {
                 label: node.label,
-                description: node.description
+                description: node.description,
+                color: node.color
             },
             style: {
                 backgroundColor: node.color           // ✅ FROM JSON

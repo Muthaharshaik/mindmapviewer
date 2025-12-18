@@ -1,6 +1,9 @@
-import { useState, useMemo,createElement}from "react";
+import { useState, useMemo, useCallback, createElement } from "react";
 import ReactFlow, { Controls } from "reactflow";
 import "reactflow/dist/style.css";
+import "../ui/MindMapViewer.css"
+import expandIcon from "../assets/expand-svgrepo-com.svg";
+import collapseIcon from "../assets/collapse-svgrepo-com.svg"
 
 import { buildNodes } from "../utils/buildNodes";
 import { buildEdges } from "../utils/buildEdges";
@@ -11,51 +14,108 @@ import { CustomNode } from "./CustomNode";
 const nodeTypes = { customNode: CustomNode };
 
 export function MindMapCanvas({ mindMap, onNodeClick }) {
+
+
+    // Root expanded by default
     const [expandedNodeIds, setExpandedNodeIds] = useState(
         new Set([mindMap.rootNode.id])
     );
+    const [animateEdges, setAnimateEdges] = useState(false)
+
+    /** Helper to check whether the node has children or not */
+    const hasChildrenMap = useMemo(()=> {
+        const map = {}
+        mindMap.connections.forEach(c => {
+            map[c.from] = true;
+        })
+        return map;
+    },[mindMap])
+
+    /* ------------------------
+       Expand / Collapse helpers
+    -------------------------*/
+
+    const toggleNode = useCallback((nodeId) => {
+        setAnimateEdges(true)
+        setExpandedNodeIds(prev => {
+            const next = new Set(prev);
+            next.has(nodeId) ? next.delete(nodeId) : next.add(nodeId);
+            return next;
+        });
+        setTimeout(() => setAnimateEdges(false), 600);
+    }, []);
+
+    const expandAll = () => {
+        const all = new Set(
+            [mindMap.rootNode.id, ...mindMap.nodes.map(n => n.id)]
+        );
+        setExpandedNodeIds(all);
+    };
+
+    const collapseAll = () => {
+        setExpandedNodeIds(new Set([mindMap.rootNode.id]));
+    };
+
+    /* ------------------------
+       Visible graph
+    -------------------------*/
 
     const { visibleNodeIds, visibleEdges } = useMemo(
         () => getVisibleGraph(mindMap, expandedNodeIds),
         [mindMap, expandedNodeIds]
     );
 
-    const rawNodes = buildNodes(mindMap).filter(n =>
-        visibleNodeIds.includes(n.id)
-    );
+    /* ------------------------
+       Build nodes with controls
+    -------------------------*/
 
-    const rawEdges = buildEdges(visibleEdges);
+    const rawNodes = buildNodes(mindMap)
+        .filter(n => visibleNodeIds.includes(n.id))
+        .map(node => ({
+            ...node,
+            data: {
+                ...node.data,
+                isExpanded: expandedNodeIds.has(node.id),
+                onToggle: () => toggleNode(node.id),
+                hasChildren: !!hasChildrenMap[node.id] 
+            }
+        }));
+
+    const rawEdges = buildEdges(visibleEdges,animateEdges);
     const layoutedNodes = applyAutoLayout(rawNodes, rawEdges);
+    const totalNodeCount = mindMap.nodes.length + 1;
+    const isAllExpanded = expandedNodeIds.size >= totalNodeCount;
 
     return (
-        <div style={{ width: "100%", height: "100vh" }}>
+        <div className="main-layout">
             <ReactFlow
                 nodes={layoutedNodes}
                 edges={rawEdges}
                 nodeTypes={nodeTypes}
                 fitView
                 onNodeClick={(e, node) => {
-                    setExpandedNodeIds(prev => {
-                        const next = new Set(prev);
-                        next.has(node.id) ? next.delete(node.id) : next.add(node.id);
-                        return next;
-                    });
-
                     if (onNodeClick?.canExecute) {
                         onNodeClick.execute();
                     }
                 }}
-                 defaultEdgeOptions={{
-                        type: "bezier",
-                        style: {
-                            stroke: "#9bbcf2",
-                            strokeWidth: 1.6,
-                            opacity: 0.9
-                        }
-    }}
+                proOptions={{ hideAttribution: true }}
             >
-                <Controls />
+                <Controls showInteractive={false}/>
             </ReactFlow>
+
+            {/* Toolbar */}
+            <div className="tool-bar">
+                {!isAllExpanded ? (
+                    <button onClick={expandAll} title="Expand All" className="icon-btn">
+                        <img src={expandIcon} alt="Expand"/>
+                    </button>
+                ) : (
+                    <button onClick={collapseAll} title="Collapse All" className="icon-btn">
+                        <img src={collapseIcon} alt="Collapse"/>
+                    </button>
+                )
+            }
+            </div>
         </div>
     );
 }

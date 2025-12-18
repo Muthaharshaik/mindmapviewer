@@ -1,4 +1,4 @@
-export function buildEdges(connections = []) {
+export function buildEdges(connections = [], animate = false) {
     return connections.map((c, i) => ({
         id: `e-${i}`,
         source: c.from,
@@ -7,13 +7,12 @@ export function buildEdges(connections = []) {
         // 🔑 KEY CHANGE
         type: "bezier",
 
-        // Optional edge label (can be removed if not needed)
-        label: "",
+        // IMPORTANT: keep this false to avoid dotted animation
+        animated: false,
 
-        // 🎨 STYLE MATCHING YOUR IMAGE
         style: {
-            stroke: "#9bbcf2",        // soft light blue
-            strokeWidth: 1.6,         // thin but visible
+            stroke: "#9bbcf2",
+            strokeWidth: 1.6,
             opacity: 0.9,
             strokeLinecap: "round",   // rounded line ends
             strokeLinejoin: "round"   // smooth corners

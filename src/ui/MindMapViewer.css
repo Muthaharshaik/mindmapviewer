@@ -1,6 +1,38 @@
-/*
-Place your custom CSS here
-*/
-.widget-hello-world {
+.main-layout {
+    width: 100%;
+    height: calc(100vh - 180px);
+    position: relative;
+    border: 1px solid #aaa;
+    border-radius: 12px;
+}
 
+.main-layout .tool-bar {
+    position: absolute;
+    bottom: 102px;
+    left: 11px;
+    z-index: 2
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    background: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.icon-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+
+.icon-btn img {
+    width: 18px;
+    height: 18px;
 }
