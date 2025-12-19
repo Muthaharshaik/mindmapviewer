@@ -1,8 +1,5 @@
 export const mindMapMock =
     {
-    "success": true,
-    "title": "Employee Progression Lifecycle Automation",
-    "summary": "A comprehensive business requirements document for automating the employee progression lifecycle, replacing manual spreadsheet-driven processes with a streamlined, system-led workflow. The solution encompasses eligibility validation, nomination management, panel coordination, assessment evaluation, and final approvals with SAP integration.",
     "mindMap": {
         "style": "hierarchical",
         "rootNode": {
@@ -1056,19 +1053,5 @@ export const mindMapMock =
             "nodeCount": 9
         }
     ],
-    "insights": [
-        "The automation initiative addresses critical pain points of manual processes, reducing 8-10 week cycles through systematic workflow automation and real-time tracking capabilities.",
-        "The solution architecture emphasizes role-based access control with five distinct user types (HR, Managers, Panel Members, P&O Heads, Admins) each having specific responsibilities and system interactions.",
-        "SAP integration serves as the backbone for data flow, from initial eligibility import through dynamic assessment form generation to final progression status synchronization, ensuring data consistency across systems.",
-        "The technical requirements prioritize scalability and multi-country support, accommodating 100-150 concurrent users with mobile-responsive interfaces and localization for global deployment.",
-        "Comprehensive audit logging and quality review processes ensure governance and compliance throughout the progression lifecycle, addressing transparency and traceability concerns of the manual system."
-    ],
-    "metadata": {
-        "generatedAt": "2025-12-17T06:56:12.341247Z",
-        "generatedBy": "Mind Map Generator API v2.0",
-        "model": "claude-sonnet-4-20250514",
-        "documentLength": 21597,
-        "fileName": "unknown",
-        "fileType": "unknown"
-    }
+    
 }

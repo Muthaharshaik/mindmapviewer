@@ -1,4 +1,5 @@
-import { useMemo,createElement}from "react"
+import { useMemo, createElement } from "react";
+import { ReactFlowProvider } from "reactflow";
 import { MindMapCanvas } from "./components/MindMapCanvas";
 import { parseMindMap } from "./utils/parseMindMap";
 import { mindMapMock } from "./mock/mindMapMock";
@@ -16,9 +17,12 @@ export function MindMapViewer(props) {
     }
 
     return (
-        <MindMapCanvas
-            mindMap={mindMapData}
-            onNodeClick={props.onNodeClick}
-        />
+        <ReactFlowProvider>
+            <MindMapCanvas
+                mindMap={mindMapData}
+                onNodeClick={props.onNodeClick}
+            />
+        </ReactFlowProvider>
     );
 }
+
