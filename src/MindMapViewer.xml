@@ -20,6 +20,11 @@
                 <caption>On Node Click</caption>
                 <description>Triggered when a node is clicked.</description>
             </property>
+            
+            <property key="onLabelChange" type="action" required="false">
+                <caption>On Label Change</caption>
+                <description>Triggered when a node label is updated.</description>
+           </property>
 
         </propertyGroup>
     </properties>

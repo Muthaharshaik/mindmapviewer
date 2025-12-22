@@ -19,6 +19,7 @@ export function MindMapViewer(props) {
         <MindMapCanvas
             mindMap={mindMapData}
             onNodeClick={props.onNodeClick}
+            onLabelChange={props.onLabelChange}
         />
     );
 }

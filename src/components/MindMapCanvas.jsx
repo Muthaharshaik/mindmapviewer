@@ -1,9 +1,10 @@
 import { useState, useMemo, useCallback, createElement } from "react";
 import ReactFlow, { Controls } from "reactflow";
 import "reactflow/dist/style.css";
-import "../ui/MindMapViewer.css"
+import "../ui/MindMapViewer.css";
+
 import expandIcon from "../assets/expand-svgrepo-com.svg";
-import collapseIcon from "../assets/collapse-svgrepo-com.svg"
+import collapseIcon from "../assets/collapse-svgrepo-com.svg";
 
 import { buildNodes } from "../utils/buildNodes";
 import { buildEdges } from "../utils/buildEdges";
@@ -13,30 +14,38 @@ import { CustomNode } from "./CustomNode";
 
 const nodeTypes = { customNode: CustomNode };
 
-export function MindMapCanvas({ mindMap, onNodeClick }) {
+export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange }) {
 
+    /* =========================================================
+       SOURCE OF TRUTH (NEW – does NOT break existing logic)
+    ========================================================== */
+    const [localMindMap, setLocalMindMap] = useState(mindMap);
+
+    /* =========================================================
+       EXISTING STATE – UNCHANGED
+    ========================================================== */
 
     // Root expanded by default
     const [expandedNodeIds, setExpandedNodeIds] = useState(
         new Set([mindMap.rootNode.id])
     );
-    const [animateEdges, setAnimateEdges] = useState(false)
+    const [animateEdges, setAnimateEdges] = useState(false);
 
     /** Helper to check whether the node has children or not */
-    const hasChildrenMap = useMemo(()=> {
-        const map = {}
-        mindMap.connections.forEach(c => {
+    const hasChildrenMap = useMemo(() => {
+        const map = {};
+        localMindMap.connections.forEach(c => {
             map[c.from] = true;
-        })
+        });
         return map;
-    },[mindMap])
+    }, [localMindMap]);
 
-    /* ------------------------
-       Expand / Collapse helpers
-    -------------------------*/
+    /* =========================================================
+       EXPAND / COLLAPSE HELPERS – UNCHANGED
+    ========================================================== */
 
     const toggleNode = useCallback((nodeId) => {
-        setAnimateEdges(true)
+        setAnimateEdges(true);
         setExpandedNodeIds(prev => {
             const next = new Set(prev);
             next.has(nodeId) ? next.delete(nodeId) : next.add(nodeId);
@@ -47,29 +56,55 @@ export function MindMapCanvas({ mindMap, onNodeClick }) {
 
     const expandAll = () => {
         const all = new Set(
-            [mindMap.rootNode.id, ...mindMap.nodes.map(n => n.id)]
+            [localMindMap.rootNode.id, ...localMindMap.nodes.map(n => n.id)]
         );
         setExpandedNodeIds(all);
     };
 
     const collapseAll = () => {
-        setExpandedNodeIds(new Set([mindMap.rootNode.id]));
+        setExpandedNodeIds(new Set([localMindMap.rootNode.id]));
     };
 
-    /* ------------------------
-       Visible graph
-    -------------------------*/
+    /* =========================================================
+       NEW: LABEL UPDATE HANDLER (ADDITIVE ONLY)
+    ========================================================== */
+
+    const handleLabelChange = useCallback((nodeId, newLabel) => {
+        setLocalMindMap(prev => {
+            const updated = {
+                ...prev,
+                nodes: prev.nodes.map(n =>
+                    n.id === nodeId
+                        ? { ...n, label: newLabel }
+                        : n
+                )
+            };
+
+            // Persist updated JSON back to Mendix
+            if (onLabelChange?.canExecute) {
+                onLabelChange.execute({
+                    json: JSON.stringify(updated)
+                });
+            }
+
+            return updated;
+        });
+    }, [onLabelChange]);
+
+    /* =========================================================
+       VISIBLE GRAPH – UNCHANGED (SOURCE SWITCHED)
+    ========================================================== */
 
     const { visibleNodeIds, visibleEdges } = useMemo(
-        () => getVisibleGraph(mindMap, expandedNodeIds),
-        [mindMap, expandedNodeIds]
+        () => getVisibleGraph(localMindMap, expandedNodeIds),
+        [localMindMap, expandedNodeIds]
     );
 
-    /* ------------------------
-       Build nodes with controls
-    -------------------------*/
+    /* =========================================================
+       BUILD NODES WITH CONTROLS – UNCHANGED + ADDITION
+    ========================================================== */
 
-    const rawNodes = buildNodes(mindMap)
+    const rawNodes = buildNodes(localMindMap)
         .filter(n => visibleNodeIds.includes(n.id))
         .map(node => ({
             ...node,
@@ -77,14 +112,20 @@ export function MindMapCanvas({ mindMap, onNodeClick }) {
                 ...node.data,
                 isExpanded: expandedNodeIds.has(node.id),
                 onToggle: () => toggleNode(node.id),
-                hasChildren: !!hasChildrenMap[node.id] 
+                hasChildren: !!hasChildrenMap[node.id],
+                onLabelChange: handleLabelChange   // ✅ NEW (non-breaking)
             }
         }));
 
-    const rawEdges = buildEdges(visibleEdges,animateEdges);
+    const rawEdges = buildEdges(visibleEdges, animateEdges);
     const layoutedNodes = applyAutoLayout(rawNodes, rawEdges);
-    const totalNodeCount = mindMap.nodes.length + 1;
+
+    const totalNodeCount = localMindMap.nodes.length + 1;
     const isAllExpanded = expandedNodeIds.size >= totalNodeCount;
+
+    /* =========================================================
+       RENDER – UNCHANGED
+    ========================================================== */
 
     return (
         <div className="main-layout">
@@ -100,21 +141,28 @@ export function MindMapCanvas({ mindMap, onNodeClick }) {
                 }}
                 proOptions={{ hideAttribution: true }}
             >
-                <Controls showInteractive={false}/>
+                <Controls showInteractive={false} />
             </ReactFlow>
 
             {/* Toolbar */}
             <div className="tool-bar">
                 {!isAllExpanded ? (
-                    <button onClick={expandAll} title="Expand All" className="icon-btn">
-                        <img src={expandIcon} alt="Expand"/>
+                    <button
+                        onClick={expandAll}
+                        title="Expand All"
+                        className="icon-btn"
+                    >
+                        <img src={expandIcon} alt="Expand" />
                     </button>
                 ) : (
-                    <button onClick={collapseAll} title="Collapse All" className="icon-btn">
-                        <img src={collapseIcon} alt="Collapse"/>
+                    <button
+                        onClick={collapseAll}
+                        title="Collapse All"
+                        className="icon-btn"
+                    >
+                        <img src={collapseIcon} alt="Collapse" />
                     </button>
-                )
-            }
+                )}
             </div>
         </div>
     );

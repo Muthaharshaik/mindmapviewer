@@ -1,10 +1,25 @@
 import { Handle, Position } from "reactflow";
-import { createElement } from "react";
+import { useState, createElement, useEffect } from "react";
 import rightIcon from "../assets/expand-right-svgrepo-com.svg";
 import leftIcon from "../assets/expand-left-svgrepo-com.svg";
 
-export function CustomNode({ data }) {
-    const showButton = data.hasChildren;
+const PLACEHOLDER = "Double-click to edit";
+
+export function CustomNode({ id, data }) {
+
+    // ADD STATE (does NOT affect existing logic)
+    const [editing, setEditing] = useState(false);
+    const [value, setValue] = useState(data.label || "");
+
+    useEffect(() => {
+        setValue(data.label || "");
+    }, [data.label]);
+
+    const commit = () => {
+        setEditing(false);
+        const finalValue = value.trim();
+        data.onLabelChange?.(id, finalValue);
+    };
 
     return (
         <div
@@ -22,13 +37,38 @@ export function CustomNode({ data }) {
                 boxShadow: "0 8px 24px rgba(0,0,0,0.12)"
             }}
         >
-            {/* Node Text */}
-            <div style={{ fontWeight: 600 }}>
-                {data.label}
-            </div>
+            {/* LABEL (ONLY THIS PART CHANGED) */}
+            {!editing ? (
+                <div
+                    style={{ fontWeight: 600, cursor: "text" }}
+                    onDoubleClick={() => setEditing(true)}
+                >
+                {data.label && data.label.trim()
+                        ? data.label
+                        : PLACEHOLDER}
+                </div>
+            ) : (
+                <input
+                    autoFocus
+                    value={value}
+                    onChange={e => setValue(e.target.value)}
+                    onBlur={commit}
+                    onKeyDown={e => e.key === "Enter" && commit()}
+                    style={{
+                        width: "100%",
+                        border: "none",
+                        outline: "none",
+                        padding: 4,
+                        borderRadius: 6,
+                        color:'#000',
+                        backgroundColor:'#fff'
+                    }}
+                />
+            )}
 
-            {/* Edge-attached expand / collapse button */}
-            {showButton && (
+            {/*  EVERYTHING BELOW IS UNCHANGED */}
+
+            {data.hasChildren && (
                 <button
                     onClick={data.onToggle}
                     style={{
