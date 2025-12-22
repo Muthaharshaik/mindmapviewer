@@ -20,6 +20,7 @@ export function MindMapViewer(props) {
             mindMap={mindMapData}
             onNodeClick={props.onNodeClick}
             onLabelChange={props.onLabelChange}
+            deltaJson={props.deltaJson}
         />
     );
 }

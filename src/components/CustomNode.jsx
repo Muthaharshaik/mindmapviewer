@@ -18,6 +18,7 @@ export function CustomNode({ id, data }) {
     const commit = () => {
         setEditing(false);
         const finalValue = value.trim();
+        if (!finalValue) return
         data.onLabelChange?.(id, finalValue);
     };
 

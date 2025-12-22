@@ -14,7 +14,7 @@ import { CustomNode } from "./CustomNode";
 
 const nodeTypes = { customNode: CustomNode };
 
-export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange }) {
+export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange,deltaJson }) {
 
     /* =========================================================
        SOURCE OF TRUTH (NEW – does NOT break existing logic)
@@ -68,28 +68,38 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange }) {
     /* =========================================================
        NEW: LABEL UPDATE HANDLER (ADDITIVE ONLY)
     ========================================================== */
-
     const handleLabelChange = useCallback((nodeId, newLabel) => {
+        const trimmed = newLabel.trim();
+
+        // Update UI immediately
         setLocalMindMap(prev => {
             const updated = {
                 ...prev,
                 nodes: prev.nodes.map(n =>
-                    n.id === nodeId
-                        ? { ...n, label: newLabel }
-                        : n
+                    n.id === nodeId ? { ...n, label: trimmed } : n
                 )
             };
 
-            // Persist updated JSON back to Mendix
-            if (onLabelChange?.canExecute) {
-                onLabelChange.execute({
-                    json: JSON.stringify(updated)
-                });
+            // Do not send empty values
+            if (!trimmed) {
+                return updated;
             }
+
+            // Send COMPLETE updated JSON
+            if (deltaJson?.setValue) {
+                deltaJson.setValue(JSON.stringify(updated));
+            }
+
+            // ✅ Trigger action (NO params)
+            onLabelChange?.execute();
 
             return updated;
         });
-    }, [onLabelChange]);
+
+    }, [onLabelChange, deltaJson]);
+
+
+
 
     /* =========================================================
        VISIBLE GRAPH – UNCHANGED (SOURCE SWITCHED)

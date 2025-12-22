@@ -20,12 +20,19 @@
                 <caption>On Node Click</caption>
                 <description>Triggered when a node is clicked.</description>
             </property>
+
+            <property key="deltaJson" type="attribute" required="false">
+                <caption>Delta JSON</caption>
+                <description>Stores updated node data as JSON</description>
+                <attributeTypes>
+                    <attributeType name="String"/>
+                </attributeTypes>
+            </property>
             
             <property key="onLabelChange" type="action" required="false">
                 <caption>On Label Change</caption>
                 <description>Triggered when a node label is updated.</description>
-           </property>
-
+            </property>
         </propertyGroup>
     </properties>
 </widget>
