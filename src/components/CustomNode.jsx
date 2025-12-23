@@ -1,5 +1,5 @@
 import { Handle, Position } from "reactflow";
-import { useState, createElement, useEffect } from "react";
+import { useState, createElement, useEffect, useRef } from "react";
 import rightIcon from "../assets/expand-right-svgrepo-com.svg";
 import leftIcon from "../assets/expand-left-svgrepo-com.svg";
 
@@ -10,16 +10,79 @@ export function CustomNode({ id, data }) {
     // ADD STATE (does NOT affect existing logic)
     const [editing, setEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
+    const inputRef = useRef(null);
 
     useEffect(() => {
         setValue(data.label || "");
     }, [data.label]);
 
+    // Focus input when editing starts
+    useEffect(() => {
+        if (editing && inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+        }
+    }, [editing]);
+
     const commit = () => {
-        setEditing(false);
         const finalValue = value.trim();
-        if (!finalValue) return
-        data.onLabelChange?.(id, finalValue);
+        
+        // Exit edit mode first
+        setEditing(false);
+        
+        // Only update if value changed and is not empty
+        if (!finalValue || finalValue === data.label) {
+            setValue(data.label || ""); // Reset to original if empty
+            return;
+        }
+
+        // Use setTimeout to ensure state updates happen after render cycle
+        setTimeout(() => {
+            data.onLabelChange?.(id, finalValue);
+        }, 0);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            e.stopPropagation();
+            commit();
+        } else if (e.key === "Escape") {
+            e.stopPropagation();
+            setEditing(false);
+            setValue(data.label || ""); // Reset to original
+        }
+    };
+
+    const handleDoubleClick = (e) => {
+        e.stopPropagation();
+        setEditing(true);
+    };
+
+    const handleBlur = () => {
+        // Small delay to allow other events to complete
+        setTimeout(() => {
+            commit();
+        }, 50);
+    };
+
+    const handleMouseDown = (e) => {
+        e.preventDefault();
+    }
+
+    // NEW: Handle single click to position cursor
+    const handleInputClick = (e) => {
+        e.stopPropagation();
+        // If text is selected, deselect and position cursor
+        if (inputRef.current) {
+            const clickPosition = inputRef.current.selectionEnd;
+            // Small timeout to ensure click is processed
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.setSelectionRange(clickPosition, clickPosition);
+                }
+            }, 0);
+        }
     };
 
     return (
@@ -38,40 +101,46 @@ export function CustomNode({ id, data }) {
                 boxShadow: "0 8px 24px rgba(0,0,0,0.12)"
             }}
         >
-            {/* LABEL (ONLY THIS PART CHANGED) */}
+            {/* LABEL - Updated with proper event handling */}
             {!editing ? (
                 <div
                     style={{ fontWeight: 600, cursor: "text" }}
-                    onDoubleClick={() => setEditing(true)}
+                    onDoubleClick={handleDoubleClick}
                 >
-                {data.label && data.label.trim()
+                    {data.label && data.label.trim()
                         ? data.label
                         : PLACEHOLDER}
                 </div>
             ) : (
                 <input
-                    autoFocus
+                    ref={inputRef}
                     value={value}
                     onChange={e => setValue(e.target.value)}
-                    onBlur={commit}
-                    onKeyDown={e => e.key === "Enter" && commit()}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    onMouseDown={handleMouseDown} // Prevent drag
+                    onClick={handleInputClick}
                     style={{
                         width: "100%",
                         border: "none",
                         outline: "none",
                         padding: 4,
                         borderRadius: 6,
-                        color:'#000',
-                        backgroundColor:'#fff'
+                        color: '#000',
+                        backgroundColor: '#fff',
+                        fontFamily: "Inter, system-ui",
+                        fontSize: 13
                     }}
                 />
             )}
 
-            {/*  EVERYTHING BELOW IS UNCHANGED */}
-
+            {/* Toggle button - unchanged */}
             {data.hasChildren && (
                 <button
-                    onClick={data.onToggle}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        data.onToggle();
+                    }}
                     style={{
                         position: "absolute",
                         top: "50%",

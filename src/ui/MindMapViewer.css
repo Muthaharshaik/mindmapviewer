@@ -1,6 +1,6 @@
 .main-layout {
     width: 100%;
-    height: calc(100vh - 180px);
+    height: calc(100vh - 265px);
     position: relative;
     border: 1px solid #aaa;
     border-radius: 12px;
@@ -35,4 +35,35 @@
 .icon-btn img {
     width: 18px;
     height: 18px;
+}
+
+.info-detail img {
+    width:14px;
+    height:14px;
+}
+
+.info-detail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:4px;
+    padding-top: 6px;
+}
+
+.info-detail span {
+    font-size: 14px;
+    font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+.react-flow__node {
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+}
+
+.react-flow__edge {
+    transition: opacity 0.3s ease !important;
+}
+
+.icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

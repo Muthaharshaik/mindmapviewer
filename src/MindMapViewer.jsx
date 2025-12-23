@@ -1,15 +1,16 @@
-import { useMemo,createElement}from "react"
+import { useMemo, createElement } from "react"
 import { MindMapCanvas } from "./components/MindMapCanvas";
 import { parseMindMap } from "./utils/parseMindMap";
-import { mindMapMock } from "./mock/mindMapMock";
 
 export function MindMapViewer(props) {
     const mindMapData = useMemo(() => {
-        if (props.mindMapJson?.value) {
-            return parseMindMap(props.mindMapJson.value);
+        // Priority: deltaJson > mindMapJson
+        const jsonSource = props.deltaJson?.value || props.mindMapJson?.value;
+        if (jsonSource) {
+            return parseMindMap(jsonSource);
         }
-        return parseMindMap(mindMapMock);
-    }, [props.mindMapJson?.value]);
+        return null;
+    }, [props.deltaJson?.value, props.mindMapJson?.value]);
 
     if (!mindMapData) {
         return <div style={{ padding: 8 }}>Invalid Mind Map data</div>;

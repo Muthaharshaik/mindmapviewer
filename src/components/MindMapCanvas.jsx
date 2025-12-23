@@ -1,10 +1,11 @@
-import { useState, useMemo, useCallback, createElement } from "react";
+import { useState, useMemo, useCallback, createElement, useEffect, useRef } from "react";
 import ReactFlow, { Controls } from "reactflow";
 import "reactflow/dist/style.css";
 import "../ui/MindMapViewer.css";
 
 import expandIcon from "../assets/expand-svgrepo-com.svg";
 import collapseIcon from "../assets/collapse-svgrepo-com.svg";
+import infoIcon from "../assets/info-circle-svgrepo-com.svg"
 
 import { buildNodes } from "../utils/buildNodes";
 import { buildEdges } from "../utils/buildEdges";
@@ -14,16 +15,30 @@ import { CustomNode } from "./CustomNode";
 
 const nodeTypes = { customNode: CustomNode };
 
-export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange,deltaJson }) {
+export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }) {
 
     /* =========================================================
-       SOURCE OF TRUTH (NEW – does NOT break existing logic)
+       SOURCE OF TRUTH
     ========================================================== */
     const [localMindMap, setLocalMindMap] = useState(mindMap);
+    const updateTimeoutRef = useRef(null);
+    const reactFlowRef = useRef(null);
 
     /* =========================================================
        EXISTING STATE – UNCHANGED
     ========================================================== */
+    useEffect(() => {
+        setLocalMindMap(mindMap);
+    }, [mindMap]);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Root expanded by default
     const [expandedNodeIds, setExpandedNodeIds] = useState(
@@ -59,17 +74,44 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange,deltaJson })
             [localMindMap.rootNode.id, ...localMindMap.nodes.map(n => n.id)]
         );
         setExpandedNodeIds(all);
+
+        //Trigger fitview after layout recalculates
+        setTimeout(() => {
+            if (reactFlowRef.current) {
+                reactFlowRef.current.fitView();
+            }
+        }, 50);
     };
 
     const collapseAll = () => {
-        setExpandedNodeIds(new Set([localMindMap.rootNode.id]));
+        // First, trigger fitView to smoothly zoom to root
+        if (reactFlowRef.current) {
+            reactFlowRef.current.fitView();
+        }
+        
+        // Then collapse after the zoom animation starts
+        setTimeout(() => {
+            setExpandedNodeIds(new Set([localMindMap.rootNode.id]));
+            
+            // Final fitView after collapse
+            setTimeout(() => {
+                if (reactFlowRef.current) {
+                    reactFlowRef.current.fitView();
+                }
+            }, 50);
+        }, 200);
     };
 
     /* =========================================================
-       NEW: LABEL UPDATE HANDLER (ADDITIVE ONLY)
+       LABEL UPDATE HANDLER
     ========================================================== */
     const handleLabelChange = useCallback((nodeId, newLabel) => {
         const trimmed = newLabel.trim();
+
+        // Clear any pending updates
+        if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current);
+        }
 
         // Update UI immediately
         setLocalMindMap(prev => {
@@ -77,7 +119,10 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange,deltaJson })
                 ...prev,
                 nodes: prev.nodes.map(n =>
                     n.id === nodeId ? { ...n, label: trimmed } : n
-                )
+                ),
+                rootNode: prev.rootNode.id === nodeId 
+                    ? { ...prev.rootNode, label: trimmed }
+                    : prev.rootNode
             };
 
             // Do not send empty values
@@ -85,24 +130,21 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange,deltaJson })
                 return updated;
             }
 
-            // Send COMPLETE updated JSON
-            if (deltaJson?.setValue) {
-                deltaJson.setValue(JSON.stringify(updated));
-            }
-
-            // ✅ Trigger action (NO params)
-            onLabelChange?.execute();
+            // Debounce external updates
+            updateTimeoutRef.current = setTimeout(() => {
+                if (deltaJson?.setValue) {
+                    deltaJson.setValue(JSON.stringify(updated));
+                }
+                onLabelChange?.execute();
+            }, 150);
 
             return updated;
         });
 
     }, [onLabelChange, deltaJson]);
 
-
-
-
     /* =========================================================
-       VISIBLE GRAPH – UNCHANGED (SOURCE SWITCHED)
+       VISIBLE GRAPH
     ========================================================== */
 
     const { visibleNodeIds, visibleEdges } = useMemo(
@@ -111,39 +153,66 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange,deltaJson })
     );
 
     /* =========================================================
-       BUILD NODES WITH CONTROLS – UNCHANGED + ADDITION
+       STABLE LAYOUT KEY - PREVENTS RECALCULATION ON LABEL CHANGE
     ========================================================== */
+    const layoutKey = useMemo(() => {
+        return JSON.stringify({
+            connections: localMindMap.connections,
+            nodeIds: localMindMap.nodes.map(n => n.id),
+            rootId: localMindMap.rootNode.id,
+            expanded: Array.from(expandedNodeIds).sort()
+        });
+    }, [localMindMap.connections, localMindMap.nodes, localMindMap.rootNode.id, expandedNodeIds]);
 
-    const rawNodes = buildNodes(localMindMap)
-        .filter(n => visibleNodeIds.includes(n.id))
-        .map(node => ({
-            ...node,
-            data: {
-                ...node.data,
-                isExpanded: expandedNodeIds.has(node.id),
-                onToggle: () => toggleNode(node.id),
-                hasChildren: !!hasChildrenMap[node.id],
-                onLabelChange: handleLabelChange   // ✅ NEW (non-breaking)
-            }
-        }));
+    /* =========================================================
+       BUILD NODES WITH LAYOUT - MEMOIZED BY STRUCTURE ONLY
+    ========================================================== */
+    const { nodes: layoutedNodes, edges: finalEdges } = useMemo(() => {
+        const rawNodes = buildNodes(localMindMap)
+            .filter(n => visibleNodeIds.includes(n.id))
+            .map(node => ({
+                ...node,
+                data: {
+                    ...node.data,
+                    isExpanded: expandedNodeIds.has(node.id),
+                    onToggle: () => toggleNode(node.id),
+                    hasChildren: !!hasChildrenMap[node.id],
+                    onLabelChange: handleLabelChange
+                }
+            }));
 
-    const rawEdges = buildEdges(visibleEdges, animateEdges);
-    const layoutedNodes = applyAutoLayout(rawNodes, rawEdges);
+        const rawEdges = buildEdges(visibleEdges, animateEdges);
+        const positioned = applyAutoLayout(rawNodes, rawEdges);
+        
+        return {
+            nodes: positioned,
+            edges: rawEdges
+        };
+    }, [layoutKey, visibleNodeIds, hasChildrenMap, visibleEdges, animateEdges]);
 
     const totalNodeCount = localMindMap.nodes.length + 1;
     const isAllExpanded = expandedNodeIds.size >= totalNodeCount;
 
+    /* callback to store reactflow instance */
+    const onInit = useCallback((instance) => {
+        reactFlowRef.current = instance;
+    }, []);
+
     /* =========================================================
-       RENDER – UNCHANGED
+       RENDER
     ========================================================== */
 
     return (
         <div className="main-layout">
             <ReactFlow
                 nodes={layoutedNodes}
-                edges={rawEdges}
+                edges={finalEdges}
                 nodeTypes={nodeTypes}
+                onInit={onInit}
                 fitView
+                // fitViewOptions={{ padding: 0.2, duration: 200 }}
+                // minZoom={0.5}
+                // maxZoom={2}
                 onNodeClick={(e, node) => {
                     if (onNodeClick?.canExecute) {
                         onNodeClick.execute();
@@ -153,6 +222,12 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange,deltaJson })
             >
                 <Controls showInteractive={false} />
             </ReactFlow>
+
+            {/*Info-detail */}
+            <div className="info-detail">
+                <img src={infoIcon} title="info" alt="Info"/>
+                <span>Double Click on the Node to edit, Click Enter to save & Escape to clear the changes.</span>
+            </div>
 
             {/* Toolbar */}
             <div className="tool-bar">
