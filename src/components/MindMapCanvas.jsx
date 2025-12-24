@@ -6,17 +6,20 @@ import "../ui/MindMapViewer.css";
 import expandIcon from "../assets/expand-svgrepo-com.svg";
 import collapseIcon from "../assets/collapse-svgrepo-com.svg";
 import infoIcon from "../assets/info-circle-svgrepo-com.svg"
+import downloadIcon from "../assets/download.svg"
 
 import { buildNodes } from "../utils/buildNodes";
 import { buildEdges } from "../utils/buildEdges";
 import { applyAutoLayout } from "../utils/applyAutoLayout";
 import { getVisibleGraph } from "../utils/getVisibleGraph";
+import { exportReactFlowToSvg } from "../utils/exportToSvg";
 import { CustomNode } from "./CustomNode";
 
 const nodeTypes = { customNode: CustomNode };
 
 export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }) {
 
+    
     /* =========================================================
        SOURCE OF TRUTH
     ========================================================== */
@@ -100,6 +103,14 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }
                 }
             }, 50);
         }, 200);
+    };
+
+    const handleExport = () => {
+        if (reactFlowRef.current) {
+            exportReactFlowToSvg(reactFlowRef.current, "mindmap.svg");
+        } else {
+            console.error("ReactFlow instance not ready");
+        }
     };
 
     /* =========================================================
@@ -248,6 +259,9 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }
                         <img src={collapseIcon} alt="Collapse" />
                     </button>
                 )}
+               <button onClick={handleExport} className="icon-btn">
+                <img src={downloadIcon} alt="Download" title="Download" style={{width:'18px', height:'18px'}}/>
+               </button>
             </div>
         </div>
     );
