@@ -1,7 +1,7 @@
 import { Handle, Position } from "reactflow";
 import { useState, createElement, useEffect, useRef } from "react";
-import rightIcon from "../assets/expand-right-svgrepo-com.svg";
-import leftIcon from "../assets/expand-left-svgrepo-com.svg";
+import rightIcon from "../assets/cheveron-right.svg";
+import leftIcon from "../assets/cheveron-left.svg";
 import whiteDownload from "../assets/whitedownload.svg";
 import React from "react";
 
@@ -131,7 +131,7 @@ export function CustomNode({ id, data }) {
                     onMouseDown={handleMouseDown} // Prevent drag
                     onClick={handleInputClick}
                     style={{
-                        width: "100%",
+                        width: "85%",
                         border: "none",
                         outline: "none",
                         padding: 4,
