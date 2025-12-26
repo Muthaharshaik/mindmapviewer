@@ -12,7 +12,7 @@ import { buildNodes } from "../utils/buildNodes";
 import { buildEdges } from "../utils/buildEdges";
 import { applyAutoLayout } from "../utils/applyAutoLayout";
 import { getVisibleGraph } from "../utils/getVisibleGraph";
-import { exportReactFlowToSvg } from "../utils/exportToSvg";
+import { exportReactFlowToSvg, exportNodeWithChildren } from "../utils/exportToSvg";
 import { CustomNode } from "./CustomNode";
 
 const nodeTypes = { customNode: CustomNode };
@@ -114,6 +114,67 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }
     };
 
     /* =========================================================
+       NEW: NODE-SPECIFIC EXPORT HANDLER
+    ========================================================== */
+    const handleNodeExport = useCallback((nodeId) => {
+        if (!reactFlowRef.current) {
+            console.error("ReactFlow instance not ready");
+            return;
+        }
+
+        // Get all descendant node IDs that are currently expanded
+        const getExpandedDescendants = (startNodeId) => {
+            const descendants = new Set([startNodeId]);
+            const queue = [startNodeId];
+            
+            while (queue.length > 0) {
+                const currentId = queue.shift();
+                
+                // Find direct children
+                const children = localMindMap.connections
+                    .filter(conn => conn.from === currentId)
+                    .map(conn => conn.to);
+                
+                // Add children if parent is expanded
+                if (expandedNodeIds.has(currentId)) {
+                    children.forEach(childId => {
+                        if (!descendants.has(childId)) {
+                            descendants.add(childId);
+                            queue.push(childId);
+                        }
+                    });
+                }
+            }
+            
+            return Array.from(descendants);
+        };
+
+        const nodeIdsToExport = getExpandedDescendants(nodeId);
+        
+        // Find the node label for filename
+        let nodeLabel = "node";
+        if (localMindMap.rootNode.id === nodeId) {
+            nodeLabel = localMindMap.rootNode.label || "root";
+        } else {
+            const node = localMindMap.nodes.find(n => n.id === nodeId);
+            if (node) {
+                nodeLabel = node.label || "node";
+            }
+        }
+        
+        // Sanitize filename
+        const sanitizedLabel = nodeLabel
+            .replace(/[^a-z0-9]/gi, '_')
+            .substring(0, 50);
+        
+        exportNodeWithChildren(
+            reactFlowRef.current, 
+            nodeIdsToExport,
+            `${sanitizedLabel}_subtree.svg`
+        );
+    }, [localMindMap, expandedNodeIds]);
+
+    /* =========================================================
        LABEL UPDATE HANDLER
     ========================================================== */
     const handleLabelChange = useCallback((nodeId, newLabel) => {
@@ -188,7 +249,8 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }
                     isExpanded: expandedNodeIds.has(node.id),
                     onToggle: () => toggleNode(node.id),
                     hasChildren: !!hasChildrenMap[node.id],
-                    onLabelChange: handleLabelChange
+                    onLabelChange: handleLabelChange,
+                    onNodeExport: handleNodeExport
                 }
             }));
 
@@ -199,7 +261,7 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }
             nodes: positioned,
             edges: rawEdges
         };
-    }, [layoutKey, visibleNodeIds, hasChildrenMap, visibleEdges, animateEdges]);
+    }, [layoutKey, visibleNodeIds, hasChildrenMap, visibleEdges, animateEdges, handleNodeExport]);
 
     const totalNodeCount = localMindMap.nodes.length + 1;
     const isAllExpanded = expandedNodeIds.size >= totalNodeCount;
@@ -222,7 +284,7 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }
                 onInit={onInit}
                 fitView
                 // fitViewOptions={{ padding: 0.2, duration: 200 }}
-                // minZoom={0.5}
+                // minZoom={0.7}
                 // maxZoom={2}
                 onNodeClick={(e, node) => {
                     if (onNodeClick?.canExecute) {

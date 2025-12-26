@@ -72,7 +72,7 @@ export function CustomNode({ id, data }) {
         e.preventDefault();
     }
 
-    // NEW: Handle single click to position cursor
+    // Handle single click to position cursor
     const handleInputClick = (e) => {
         e.stopPropagation();
         // If text is selected, deselect and position cursor
@@ -84,6 +84,14 @@ export function CustomNode({ id, data }) {
                     inputRef.current.setSelectionRange(clickPosition, clickPosition);
                 }
             }, 0);
+        }
+    };
+
+    // NEW: Handle node export
+    const handleNodeDownload = (e) => {
+        e.stopPropagation();
+        if (data.onNodeExport) {
+            data.onNodeExport(id);
         }
     };
 
@@ -106,7 +114,7 @@ export function CustomNode({ id, data }) {
             {/* LABEL - Updated with proper event handling */}
             {!editing ? (
                 <div
-                    style={{ fontWeight: 600, cursor: "text" }}
+                    style={{ fontWeight: 600, cursor: "text", width: "85%" }}
                     onDoubleClick={handleDoubleClick}
                 >
                     {data.label && data.label.trim()
@@ -136,7 +144,7 @@ export function CustomNode({ id, data }) {
                 />
             )}
 
-            {/* Toggle button - unchanged */}
+            {/* Toggle button and Download button */}
             {data.hasChildren && (
                 <>
                 <button
@@ -158,15 +166,13 @@ export function CustomNode({ id, data }) {
                 </button>
 
                 <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                    }}
+                    onClick={handleNodeDownload}
                     className="node-download"
                 >
                     <img 
                        src={whiteDownload}
-                       title= "Download Child Nodes"
-                       alt="Download Related Nodes"
+                       title="Download This Node & Expanded Children"
+                       alt="Download Node Subtree"
                        style={{
                         width: 12,
                         height: 12
