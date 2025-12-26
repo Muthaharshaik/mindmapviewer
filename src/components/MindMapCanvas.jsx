@@ -3,8 +3,8 @@ import ReactFlow, { Controls } from "reactflow";
 import "reactflow/dist/style.css";
 import "../ui/MindMapViewer.css";
 
-import expandIcon from "../assets/expand-svgrepo-com.svg";
-import collapseIcon from "../assets/collapse-svgrepo-com.svg";
+import expandIcon from "../assets/chevrons-up-down.svg";
+import collapseIcon from "../assets/chevrons-down-up.svg";
 import infoIcon from "../assets/info-circle-svgrepo-com.svg"
 import downloadIcon from "../assets/download.svg"
 
@@ -259,7 +259,7 @@ export function MindMapCanvas({ mindMap, onNodeClick, onLabelChange, deltaJson }
                         <img src={collapseIcon} alt="Collapse" />
                     </button>
                 )}
-               <button onClick={handleExport} className="icon-btn">
+               <button onClick={handleExport} className="icon-btn" style={{marginTop: '5px'}}>
                 <img src={downloadIcon} alt="Download" title="Download" style={{width:'18px', height:'18px'}}/>
                </button>
             </div>

@@ -27,7 +27,7 @@ export async function exportReactFlowToSvg(
         font-weight: 500;
         color: #333;
     `;
-    overlay.textContent = 'Exporting...';
+    overlay.textContent = 'Downloading...';
     document.body.appendChild(overlay);
 
     try {
@@ -80,7 +80,9 @@ export async function exportReactFlowToSvg(
                     'react-flow__minimap', 
                     'react-flow__controls',
                     'react-flow__background',
-                    'react-flow__panel'
+                    'react-flow__panel',
+                    'button-styles',
+                    'node-download'
                 ];
                 return !excludeClasses.some(className => 
                     node.classList?.contains(className)

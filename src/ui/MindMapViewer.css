@@ -4,18 +4,19 @@
     position: relative;
     border: 1px solid #aaa;
     border-radius: 12px;
+    margin-bottom: 24px;
 }
 
 .main-layout .tool-bar {
     position: absolute;
     bottom: 102px;
-    left: 11px;
+    left: 12px;
     z-index: 2
 }
 
 .icon-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 8px;
     border: none;
     background: #ffffff;
@@ -23,13 +24,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    /* box-shadow: 0 4px 12px rgba(0,0,0,0.12); */
+    border: 1px solid #d9d9d9;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .icon-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    /* box-shadow: 0 6px 16px rgba(0,0,0,0.18); */
 }
 
 .icon-btn img {
@@ -66,4 +68,42 @@
 .icon-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.react-flow__node-customNode {
+    background-color: color-mix(in srgb, var(--node-color) 85%, black) !important;
+}
+
+.node-download {
+    background: transparent;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 18px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 6px;
+}
+
+.button-styles {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: -14px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 6px;
 }

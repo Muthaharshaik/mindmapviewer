@@ -2,6 +2,8 @@ import { Handle, Position } from "reactflow";
 import { useState, createElement, useEffect, useRef } from "react";
 import rightIcon from "../assets/expand-right-svgrepo-com.svg";
 import leftIcon from "../assets/expand-left-svgrepo-com.svg";
+import whiteDownload from "../assets/whitedownload.svg";
+import React from "react";
 
 const PLACEHOLDER = "Double-click to edit";
 
@@ -89,9 +91,9 @@ export function CustomNode({ id, data }) {
         <div
             style={{
                 position: "relative",
-                backgroundColor: data.color,
+                 "--node-color": data.color,
+                backgroundColor: `color-mix(in srgb, ${data.color} 85%, black)`,
                 padding: "14px 22px",
-                borderRadius: 14,
                 color: "#fff",
                 fontFamily: "Inter, system-ui",
                 fontSize: 13,
@@ -136,27 +138,13 @@ export function CustomNode({ id, data }) {
 
             {/* Toggle button - unchanged */}
             {data.hasChildren && (
+                <>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
                         data.onToggle();
                     }}
-                    style={{
-                        position: "absolute",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        right: "-14px",
-                        width: 24,
-                        height: 24,
-                        borderRadius: "50%",
-                        border: "none",
-                        background: "#ffffff",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.15)"
-                    }}
+                    className="button-styles"
                 >
                     <img
                         src={data.isExpanded ? rightIcon : leftIcon}
@@ -168,6 +156,24 @@ export function CustomNode({ id, data }) {
                         }}
                     />
                 </button>
+
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                    }}
+                    className="node-download"
+                >
+                    <img 
+                       src={whiteDownload}
+                       title= "Download Child Nodes"
+                       alt="Download Related Nodes"
+                       style={{
+                        width: 12,
+                        height: 12
+                       }}
+                    />
+                </button>
+                </>
             )}
 
             {/* React Flow Handles */}
